@@ -1,0 +1,26 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <!-- Declare that this build targets Android Automotive OS natively -->
+  <uses-feature android:name="android.hardware.type.automotive" android:required="true" />
+
+  <application>
+    <!--
+      Car App Library service — connects to the AAOS car host so the system's
+      media source list, steering-wheel controls, and Now Playing overlay all
+      talk to Spotube's existing audio_service MediaBrowserService.
+      Tapping "Open App" inside this Car UI launches the full Flutter Activity.
+    -->
+    <service
+      android:name=".automotive.SpotubeCarAppService"
+      android:exported="true">
+      <intent-filter>
+        <action android:name="androidx.car.app.CarAppService" />
+        <category android:name="androidx.car.app.category.MEDIA" />
+      </intent-filter>
+      <meta-data
+        android:name="androidx.car.app.minCarApiLevel"
+        android:value="1" />
+    </service>
+  </application>
+
+</manifest>

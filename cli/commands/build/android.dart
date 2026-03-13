@@ -36,6 +36,31 @@ class AndroidBuildCommand extends Command with BuildCommandCommonSteps {
       join(cwd.path, "build", "Spotube-android-all-arch.apk"),
     );
 
-    stdout.writeln("✅ Built Android Apk and Appbundle");
+    stdout.writeln("✅ Built Android APK");
+
+    // Build the Android Automotive OS (AAOS) App Bundle for Google Play
+    // Use GITHUB_RUN_NUMBER as the build-number so every CI upload has a
+    // unique, ever-increasing versionCode as required by Google Play.
+    final buildNumber = CliEnv.ghRunNumber ?? '1';
+    await shell.run(
+      "flutter build appbundle --flavor automotive --build-number $buildNumber",
+    );
+
+    final ogAabFile = File(
+      join(
+        "build",
+        "app",
+        "outputs",
+        "bundle",
+        "automotiveRelease",
+        "app-automotive-release.aab",
+      ),
+    );
+
+    await ogAabFile.copy(
+      join(cwd.path, "build", "Spotube-automotive-all-arch.aab"),
+    );
+
+    stdout.writeln("✅ Built Android Automotive OS (AAOS) App Bundle");
   }
 }

@@ -51,6 +51,7 @@ jobs:
             arch: all
             files: |
               build/Spotube-android-all-arch.apk
+              build/Spotube-automotive-all-arch.aab
           - os: windows-latest
             platform: windows
             arch: x86
