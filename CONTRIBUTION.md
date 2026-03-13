@@ -145,6 +145,24 @@ Do the following:
   fvm flutter run -d <window|macos|linux|(<android-device-id>)>
   ```
 
+#### GitHub Actions Android signing
+
+The GitHub Actions workflows build signed Android artifacts by recreating the keystore files at runtime from repository secrets. Add these secrets in **Settings → Secrets and variables → Actions**:
+
+- `ANDROID_KEYSTORE_BASE64`: base64-encoded contents of your `.jks` or `.keystore` file
+- `ANDROID_KEY_ALIAS`: the key alias inside the keystore
+- `ANDROID_KEY_PASSWORD`: the password for the alias
+- `ANDROID_KEYSTORE_PASSWORD`: the password for the keystore
+- `DOTENV_RELEASE`: the production `.env` values, one `KEY=VALUE` per line (the workflow adds `RELEASE_CHANNEL` automatically)
+
+You can generate the keystore secret locally with:
+
+```bash
+base64 -w 0 android/app/upload-keystore.jks
+```
+
+Do not commit `android/key.properties` or the keystore file. The workflows recreate both files only for the job that needs them.
+
 Do debugging/testing/build etc then submit to us with PR against the development branch (dev) & we'll review your code
 
 

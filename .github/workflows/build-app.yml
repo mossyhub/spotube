@@ -1,0 +1,78 @@
+name: Build App
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        type: choice
+        options:
+          - stable
+          - nightly
+        default: stable
+        description: The release channel to build
+
+env:
+  FLUTTER_VERSION: 3.35.2
+  FLUTTER_CHANNEL: master
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2.18.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+          git-source: https://github.com/flutter/flutter.git
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "17"
+          cache: gradle
+          check-latest: true
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install Android dependencies
+        run: |
+          flutter pub get
+          dart cli/cli.dart install-dependencies --platform=android --arch=all
+
+      - name: Configure Android signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          printf 'storeFile=app/upload-keystore.jks\nkeyAlias=%s\nkeyPassword=%s\nstorePassword=%s\n' \
+            "$ANDROID_KEY_ALIAS" \
+            "$ANDROID_KEY_PASSWORD" \
+            "$ANDROID_KEYSTORE_PASSWORD" \
+            > android/key.properties
+
+      - name: Build signed Android app
+        run: dart cli/cli.dart build --arch=all android
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          DOTENV: ${{ secrets.DOTENV_RELEASE }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: app-${{ inputs.channel }}
+          path: build/Spotube-android-all-arch.apk
