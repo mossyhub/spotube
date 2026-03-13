@@ -109,6 +109,12 @@ android {
             resValue "string", "app_name_en", "Spotube"
             signingConfig signingConfigs.release
         }
+        automotive {
+            dimension "default"
+            resValue "string", "app_name_en", "Spotube"
+            signingConfig signingConfigs.release
+            minSdkVersion 28
+        }
     }
 
     packagingOptions {
