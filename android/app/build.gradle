@@ -50,6 +50,7 @@ android {
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
+        automotive.java.srcDirs += 'src/automotive/kotlin'
     }
 
     buildFeatures {
@@ -144,4 +145,7 @@ dependencies {
 
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
     implementation 'com.google.code.gson:gson:2.11.0'
+
+    // Car App Library — automotive flavor only (AAOS interactive media UI)
+    automotiveImplementation "androidx.car.app:app-automotive:1.4.0"
 }
