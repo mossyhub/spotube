@@ -1,0 +1,94 @@
+name: Build Signed Bundle
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        type: choice
+        options:
+          - stable
+          - nightly
+        default: stable
+        description: The release channel to write into the bundle environment
+
+env:
+  FLUTTER_VERSION: 3.35.2
+  FLUTTER_CHANNEL: master
+
+permissions:
+  contents: read
+
+jobs:
+  build-signed-bundle:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2.18.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: ${{ env.FLUTTER_CHANNEL }}
+          cache: true
+          git-source: https://github.com/flutter/flutter.git
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: "17"
+          cache: gradle
+          check-latest: true
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install Android dependencies
+        run: |
+          flutter pub get
+          dart cli/cli.dart install-dependencies --platform=android --arch=all
+
+      - name: Configure Android signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          test -n "$ANDROID_KEY_ALIAS"
+          test -n "$ANDROID_KEY_PASSWORD"
+          test -n "$ANDROID_KEYSTORE_PASSWORD"
+          umask 077
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          printf 'storeFile=app/upload-keystore.jks\nkeyAlias=%s\nkeyPassword=%s\nstorePassword=%s\n' \
+            "$ANDROID_KEY_ALIAS" \
+            "$ANDROID_KEY_PASSWORD" \
+            "$ANDROID_KEYSTORE_PASSWORD" \
+            > android/key.properties
+
+      - name: Generate release environment
+        run: |
+          printf '%s\nRELEASE_CHANNEL=%s\n' \
+            "$DOTENV" \
+            "$CHANNEL" \
+            > .env
+        env:
+          CHANNEL: ${{ inputs.channel }}
+          DOTENV: ${{ secrets.DOTENV_RELEASE }}
+
+      - name: Build signed Android Automotive bundle
+        run: |
+          # The bundle is always built from the dedicated automotive flavor.
+          # The selected channel is written to .env for runtime release behavior,
+          # while the automotive flavor determines the build variant and package ID.
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build appbundle --flavor automotive --build-number "${GITHUB_RUN_NUMBER}"
+          cp build/app/outputs/bundle/automotiveRelease/app-automotive-release.aab build/Spotube-automotive-all-arch.aab
+
+      - uses: actions/upload-artifact@v4
+        with:
+          if-no-files-found: error
+          name: signed-bundle-${{ inputs.channel }}
+          path: build/Spotube-automotive-all-arch.aab

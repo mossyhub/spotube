@@ -170,7 +170,7 @@ Grab the latest nightly builds of Spotube [from the GitHub Releases](https://git
 
 ## 🕳️ Building from source
 
-<a href="https://github.com/KRTirtho/spotube/actions"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/KRTirtho/spotube/spotube-release-binary.yml?+label=Build%20Status"></a>
+<a href="https://github.com/mossyhub/spotube/actions"><img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/mossyhub/spotube/build-app.yml?+label=Build%20Status"></a>
 
 You can compile Spotube's source code by [following these instructions](CONTRIBUTION.md#your-first-code-contribution).
 
