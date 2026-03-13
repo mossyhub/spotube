@@ -115,7 +115,7 @@ android {
             applicationId "com.mossyhub.spotube"
             resValue "string", "app_name_en", "Spotube"
             signingConfig signingConfigs.release
-            minSdkVersion 28
+            minSdkVersion 29
         }
     }
 
