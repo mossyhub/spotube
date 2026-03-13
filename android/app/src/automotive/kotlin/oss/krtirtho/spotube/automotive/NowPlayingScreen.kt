@@ -14,6 +14,8 @@ import androidx.car.app.model.Pane
 import androidx.car.app.model.PaneTemplate
 import androidx.car.app.model.Row
 import androidx.car.app.model.Template
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import oss.krtirtho.spotube.MainActivity
 
 /**
@@ -31,6 +33,20 @@ class NowPlayingScreen(carContext: CarContext) : Screen(carContext) {
     private var metadata: MediaMetadataCompat? = null
     private var playbackState: PlaybackStateCompat? = null
     private var isConnecting = true
+
+    init {
+        lifecycle.addObserver(
+            object : DefaultLifecycleObserver {
+                override fun onStart(owner: LifecycleOwner) {
+                    connectMediaBrowser()
+                }
+
+                override fun onStop(owner: LifecycleOwner) {
+                    disconnectMediaBrowser()
+                }
+            }
+        )
+    }
 
     // ── MediaBrowser connection ──────────────────────────────────────────────
 
@@ -96,7 +112,7 @@ class NowPlayingScreen(carContext: CarContext) : Screen(carContext) {
             .build()
 
         if (isConnecting) {
-            return PaneTemplate.Builder(Pane.Builder().setIsLoading(true).build())
+            return PaneTemplate.Builder(Pane.Builder().setLoading(true).build())
                 .setTitle("Spotube")
                 .setHeaderAction(Action.APP_ICON)
                 .setActionStrip(ActionStrip.Builder().addAction(openAppAction).build())
@@ -156,10 +172,8 @@ class NowPlayingScreen(carContext: CarContext) : Screen(carContext) {
             .build()
     }
 
-    // ── Lifecycle ────────────────────────────────────────────────────────────
-
-    override fun onStart() {
-        super.onStart()
+    private fun connectMediaBrowser() {
+        mediaBrowser?.disconnect()
         isConnecting = true
         mediaBrowser = MediaBrowserCompat(
             carContext,
@@ -170,15 +184,16 @@ class NowPlayingScreen(carContext: CarContext) : Screen(carContext) {
             connectionCallback,
             null
         ).also { it.connect() }
+        invalidate()
     }
 
-    override fun onStop() {
-        super.onStop()
+    private fun disconnectMediaBrowser() {
         mediaController?.unregisterCallback(mediaControllerCallback)
         mediaController = null
         mediaBrowser?.disconnect()
         mediaBrowser = null
         metadata = null
         playbackState = null
+        isConnecting = false
     }
 }
