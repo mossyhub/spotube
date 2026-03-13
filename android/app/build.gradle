@@ -111,6 +111,7 @@ android {
         }
         automotive {
             dimension "default"
+            applicationId "com.mossyhub.spotube"
             resValue "string", "app_name_en", "Spotube"
             signingConfig signingConfigs.release
             minSdkVersion 28

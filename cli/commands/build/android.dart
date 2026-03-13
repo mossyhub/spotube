@@ -39,8 +39,11 @@ class AndroidBuildCommand extends Command with BuildCommandCommonSteps {
     stdout.writeln("✅ Built Android APK");
 
     // Build the Android Automotive OS (AAOS) App Bundle for Google Play
+    // Use GITHUB_RUN_NUMBER as the build-number so every CI upload has a
+    // unique, ever-increasing versionCode as required by Google Play.
+    final buildNumber = CliEnv.ghRunNumber ?? '1';
     await shell.run(
-      "flutter build appbundle --flavor automotive",
+      "flutter build appbundle --flavor automotive --build-number $buildNumber",
     );
 
     final ogAabFile = File(
