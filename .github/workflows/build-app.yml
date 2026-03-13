@@ -15,8 +15,11 @@ env:
   FLUTTER_VERSION: 3.35.2
   FLUTTER_CHANNEL: master
 
+permissions:
+  contents: read
+
 jobs:
-  build-apk:
+  build-signed-apk:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
@@ -65,11 +68,23 @@ jobs:
             "$ANDROID_KEYSTORE_PASSWORD" \
             > android/key.properties
 
-      - name: Build signed Android app
-        run: dart cli/cli.dart build --arch=all android
+      - name: Generate release environment
+        run: |
+          printf '%s\nRELEASE_CHANNEL=%s\n' \
+            "$DOTENV" \
+            "$CHANNEL" \
+            > .env
         env:
           CHANNEL: ${{ inputs.channel }}
           DOTENV: ${{ secrets.DOTENV_RELEASE }}
+
+      - name: Build signed Android app
+        run: |
+          dart run build_runner build --delete-conflicting-outputs
+          flutter build apk --flavor "$CHANNEL" --build-number "${GITHUB_RUN_NUMBER}"
+          cp build/app/outputs/flutter-apk/app-"$CHANNEL"-release.apk build/Spotube-android-all-arch.apk
+        env:
+          CHANNEL: ${{ inputs.channel }}
 
       - uses: actions/upload-artifact@v4
         with:

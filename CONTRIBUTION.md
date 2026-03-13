@@ -155,10 +155,14 @@ The GitHub Actions workflows build signed Android artifacts by recreating the ke
 - `ANDROID_KEYSTORE_PASSWORD`: the password for the keystore
 - `DOTENV_RELEASE`: the production `.env` values, one `KEY=VALUE` per line (the workflow adds `RELEASE_CHANNEL` automatically)
 
-You can generate the keystore secret locally with:
+You can generate the keystore secret locally from your existing signing keystore with:
 
 ```bash
+# Linux
 base64 -w 0 android/app/upload-keystore.jks
+
+# macOS
+base64 -i android/app/upload-keystore.jks | tr -d '\n'
 ```
 
 Do not commit `android/key.properties` or the keystore file. The workflows recreate both files only for the job that needs them.
