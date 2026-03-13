@@ -148,4 +148,5 @@ dependencies {
 
     // Car App Library — automotive flavor only (AAOS interactive media UI)
     automotiveImplementation "androidx.car.app:app-automotive:1.4.0"
+    automotiveImplementation "androidx.media:media:1.7.1"
 }
