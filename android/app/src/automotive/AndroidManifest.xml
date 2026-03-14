@@ -1,9 +1,29 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
 
   <!-- Declare that this build targets Android Automotive OS natively -->
   <uses-feature android:name="android.hardware.type.automotive" android:required="true" />
 
   <application>
+    <!--
+      Native Android Automotive OS apps must not ship the projected Android Auto
+      metadata from the main manifest.
+    -->
+    <meta-data
+      android:name="com.google.android.gms.car.application"
+      tools:node="remove" />
+
+    <!--
+      For the AAOS flavor, keep AudioService available to the app itself but do
+      not publish it as a MediaBrowserService. Play rejects builds that expose a
+      MediaBrowserService alongside a CarAppService in the same automotive app.
+    -->
+    <service
+      android:name="com.ryanheise.audioservice.AudioService"
+      android:exported="true"
+      android:foregroundServiceType="mediaPlayback"
+      tools:node="replace" />
+
     <!--
       Car App Library service — connects to the AAOS car host so the system's
       media source list, steering-wheel controls, and Now Playing overlay all
